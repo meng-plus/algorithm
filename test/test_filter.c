@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include "../src/algorithms/filter.h"
+#include "algorithm_module.h"
 
 void test_sliding_window_filter()
 {
@@ -18,7 +18,7 @@ void test_sliding_window_filter()
     printf("test_sliding_window_filter passed\n");
 }
 
-int main1()
+int main(int argc, char *argv[])
 {
     test_sliding_window_filter();
     return 0;
