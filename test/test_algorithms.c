@@ -4,25 +4,122 @@
 #include <check.h>
 #include <stdlib.h>
 
-START_TEST(test_mean_f)
+START_TEST(test_meanFilterFloat)
 {
     float data[] = {1, 2, 3, 4, 5};
-    ck_assert_int_eq(mean_f(data, 5), 3.0);
+    ck_assert_int_eq(meanFilterFloat(data, 5), 3.0);
 }
 END_TEST
 
-START_TEST(test_mean_i)
+START_TEST(test_meanFilterint32)
 {
     int data[] = {1, 2, 3, 4, 5};
-    ck_assert_int_eq(mean_i(data, 5), 3.0);
+    ck_assert_int_eq(meanFilterint32(data, 5), 3.0);
 }
 END_TEST
+START_TEST(test_medianFilter)
+{
+    float data[] = {21, 30, 15, 25, 35};
+    float median = 0;
+    medianFilter(data, 5, sizeof(float), &median, compareFloat);
+
+    ck_assert_float_eq(median, 25);
+}
+END_TEST
+
+// 辅助函数：比较浮点数是否相等（允许一定的误差）
+int float_equal(float a, float b, float epsilon)
+{
+    return fabs(a - b) < epsilon;
+}
+// 测试用例 1：简单的线性数据
+START_TEST(test_linear_curve_fit_simple)
+{
+    float x[] = {1, 2, 3, 4, 5};
+    float y[] = {2, 4, 6, 8, 10};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float slope, intercept;
+    linear_curve_fit(x, y, size, &slope, &intercept);
+    // 预期结果：斜率为 2，截距为 0
+    ck_assert(float_equal(slope, 2.0f, 1e-6));
+    ck_assert(float_equal(intercept, 0.0f, 1e-6));
+}
+END_TEST
+// 测试用例 2：带截距的线性数据
+START_TEST(test_linear_curve_fit_intercept)
+{
+    float x[] = {1, 2, 3, 4, 5};
+    float y[] = {3, 5, 7, 9, 11};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float slope, intercept;
+    linear_curve_fit(x, y, size, &slope, &intercept);
+    // 预期结果：斜率为 2，截距为 1
+    ck_assert(float_equal(slope, 2.0f, 1e-6));
+    ck_assert(float_equal(intercept, 1.0f, 1e-6));
+}
+END_TEST
+// 测试用例 3：随机数据
+START_TEST(test_linear_curve_fit_random)
+{
+    float x[] = {0, 1, 2, 3, 4};
+    float y[] = {1.1, 2.9, 4.2, 6.0, 7.8};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float slope, intercept;
+    linear_curve_fit(x, y, size, &slope, &intercept);
+    // 预期结果：斜率接近 2，截距接近 1
+    ck_assert(float_equal(slope, 1.65f, 1e-2));
+    ck_assert(float_equal(intercept, 1.1f, 1e-2));
+}
+END_TEST
+// 测试用例 1：简单的二次拟合
+START_TEST(test_quadratic_fit_simple)
+{
+    float x[] = {0, 1, 2, 3, 4};
+    float y[] = {1, 4, 9, 16, 25};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float a, b, c;
+    quadratic_fit(x, y, size, &a, &b, &c);
+    // 预期结果：a = 1, b = 2, c = 1 (y = 1*x^2 + 2*x + 1)
+    ck_assert(float_equal(a, 1.0f, 1e-6));
+    ck_assert(float_equal(b, 2.0f, 1e-6));
+    ck_assert(float_equal(c, 1.0f, 1e-6));
+}
+END_TEST
+// 测试用例 2：带线性项和常数的二次拟合
+START_TEST(test_quadratic_fit_with_terms)
+{
+    float x[] = {0, 1, 2, 3, 4};
+    float y[] = {2, 5, 12, 23, 38};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float a, b, c;
+    quadratic_fit(x, y, size, &a, &b, &c);
+    // 预期结果：a = 2, b = 1, c = 2 (y = 2x^2 + 1x + 2)
+    ck_assert(float_equal(a, 2.0f, 1e-6));
+    ck_assert(float_equal(b, 1.0f, 1e-6));
+    ck_assert(float_equal(c, 2.0f, 1e-6));
+}
+END_TEST
+// 测试用例 3：随机数据的二次拟合
+START_TEST(test_quadratic_fit_random)
+{
+    float x[] = {-2, -1, 0, 1, 2};
+    float y[] = {8, -1, -6, -1, 8};
+    int size  = sizeof(x) / sizeof(x[0]);
+    float a, b, c;
+    quadratic_fit(x, y, size, &a, &b, &c);
+    // 预期结果：a =3.285714, b = 0.0, c = -4.971429  (y = ax^2 + bx - c)
+    ck_assert(float_equal(a, 3.285714f, 1e-6));
+    ck_assert(float_equal(b, 0.0f, 1e-6));
+    ck_assert(float_equal(c, -4.971429f, 1e-6));
+}
+END_TEST
+
 START_TEST(test_cubic_fit)
 {
-    double x[] = {108,     108.099, 108.198, 108.297, 108.396, 108.495, 108.595, 108.694, 108.793, 108.892, 108.991,
-                  109.091, 109.19,  109.289, 109.388, 109.487, 109.586, 109.686, 109.785, 109.884, 109.983, 110.082,
-                  110.182, 110.281, 110.38,  110.479, 110.578, 110.678, 110.777, 110.876, 110.975, 111.074, 111.173,
-                  111.273, 111.372, 111.471, 111.57,  111.669, 111.769, 111.868, 111.967};
+    double x[] = {108,     108.099,    108.198, 108.297, 108.396, 108.495, 108.595, 108.694, 108.793, 108.892, 108.991,
+                  109.091, 109.19,     109.289, 109.388, 109.487, 109.586, 109.686, 109.785, 109.884, 109.983, 110.082,
+                  110.182, 110.281,    110.38,  110.479, 110.578, 110.678, 110.777, 110.876, 110.975, 111.074, 111.173,
+                  111.273, 111 - .372, 111.471, 111.57,  111.669, 111.769, 111.868, 111.967};
     double y[] = {315.689e-6, 264.934e-6, 279.018e-6, 345.008e-6, 358.117e-6, 377.427e-6, 442.797e-6,
                   406.923e-6, 414.009e-6, 473.356e-6, 498.069e-6, 521.719e-6, 496.297e-6, 523.136e-6,
                   513.747e-6, 583.9e-6,   616.497e-6, 600.73e-6,  579.737e-6, 606.133e-6, 614.105e-6,
@@ -231,12 +328,20 @@ Suite *algorithms_suite(void)
     /* Core test case */
     tc_mean = tcase_create("mean");
 
-    tcase_add_test(tc_mean, test_mean_i);
-    tcase_add_test(tc_mean, test_mean_f);
+    tcase_add_test(tc_mean, test_meanFilterint32);
+    tcase_add_test(tc_mean, test_meanFilterFloat);
+    tcase_add_test(tc_mean, test_medianFilter);
     suite_add_tcase(s, tc_mean);
     /* Core test case */
     TCase *tc_cubic_fit = tcase_create("cubic_fit");
     tcase_add_test(tc_cubic_fit, test_cubic_fit);
+    tcase_add_test(tc_cubic_fit, test_linear_curve_fit_simple);
+    tcase_add_test(tc_cubic_fit, test_linear_curve_fit_intercept);
+    tcase_add_test(tc_cubic_fit, test_linear_curve_fit_random);
+    tcase_add_test(tc_cubic_fit, test_quadratic_fit_simple);
+    tcase_add_test(tc_cubic_fit, test_quadratic_fit_with_terms);
+    tcase_add_test(tc_cubic_fit, test_quadratic_fit_random);
+
     suite_add_tcase(s, tc_cubic_fit);
 
     TCase *tc_sort = tcase_create("sort");

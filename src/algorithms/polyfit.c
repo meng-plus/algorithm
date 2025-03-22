@@ -80,10 +80,7 @@ void polyfit(double *d_X, double *d_Y, int d_N, int rank, double *coeff)
         //消元过程
         for (i = k + 1; i < rank + 1; i++)
         {
-            for (j = k + 1; j < rank + 1; j++)
-            {
-                aT_A[i][j] -= aT_A[k][j] * aT_A[i][k] / aT_A[k][k];
-            }
+            for (j = k + 1; j < rank + 1; j++) { aT_A[i][j] -= aT_A[k][j] * aT_A[i][k] / aT_A[k][k]; }
             aT_Y[i] -= aT_Y[k] * aT_A[i][k] / aT_A[k][k];
         }
     }
@@ -91,10 +88,7 @@ void polyfit(double *d_X, double *d_Y, int d_N, int rank, double *coeff)
     //回代过程
     for (i = rank + 1 - 1; i >= 0; coeff[i] /= aT_A[i][i], i--)
     {
-        for (j = i + 1, coeff[i] = aT_Y[i]; j < rank + 1; j++)
-        {
-            coeff[i] -= aT_A[i][j] * coeff[j];
-        }
+        for (j = i + 1, coeff[i] = aT_Y[i]; j < rank + 1; j++) { coeff[i] -= aT_A[i][j] * coeff[j]; }
     }
 
     return;
@@ -123,7 +117,8 @@ void find_max_y_x(double coef[4], double x_min, double x_max, double *x_max_y, d
         {
             if (candidates[i] >= x_min && candidates[i] <= x_max)
             {
-                double y_val = coef[3] * pow(candidates[i], 3) + coef[2] * pow(candidates[i], 2) + coef[1] * candidates[i] + coef[0];
+                double y_val = coef[3] * pow(candidates[i], 3) + coef[2] * pow(candidates[i], 2)
+                               + coef[1] * candidates[i] + coef[0];
                 if (y_val > *max_y)
                 {
                     *max_y   = y_val;
@@ -149,44 +144,44 @@ void linear_curve_fit(float *x, float *y, int size, float *slope, float *interce
     *intercept = (sum_y - *slope * sum_x) / size;
 }
 // 二次拟合函数
-void quadratic_fit(double *x, double *y, int n, double *a, double *b, double *c)
+void quadratic_fit(float *x, float *y, int n, float *a, float *b, float *c)
 {
-    double sum_x = 0, sum_x2 = 0, sum_x3 = 0, sum_x4 = 0;
-    double sum_y = 0, sum_xy = 0, sum_x2y = 0;
+    float sum_x = 0, sum_x2 = 0, sum_x3 = 0, sum_x4 = 0;
+    float sum_y = 0, sum_xy = 0, sum_x2y = 0;
 
     for (int i = 0; i < n; i++)
     {
-        double xi  = x[i];
-        double yi  = y[i];
-        sum_x     += xi;
-        sum_x2    += xi * xi;
-        sum_x3    += xi * xi * xi;
-        sum_x4    += xi * xi * xi * xi;
-        sum_y     += yi;
-        sum_xy    += xi * yi;
-        sum_x2y   += xi * xi * yi;
+        float xi  = x[i];
+        float yi  = y[i];
+        sum_x    += xi;
+        sum_x2   += xi * xi;
+        sum_x3   += xi * xi * xi;
+        sum_x4   += xi * xi * xi * xi;
+        sum_y    += yi;
+        sum_xy   += xi * yi;
+        sum_x2y  += xi * xi * yi;
     }
 
-    double A[3][3] = {
+    float A[3][3] = {
         {     n,  sum_x, sum_x2},
         { sum_x, sum_x2, sum_x3},
         {sum_x2, sum_x3, sum_x4}
     };
 
-    double B[3] = {sum_y, sum_xy, sum_x2y};
+    float B[3] = {sum_y, sum_xy, sum_x2y};
 
     // 解线性方程组
     for (int i = 0; i < 3; i++)
     {
         for (int j = i + 1; j < 3; j++)
         {
-            double ratio = A[j][i] / A[i][i];
+            float ratio = A[j][i] / A[i][i];
             for (int k = 0; k < 3; k++) { A[j][k] -= ratio * A[i][k]; }
             B[j] -= ratio * B[i];
         }
     }
 
-    *c = B[2] / A[2][2];
-    *b = (B[1] - A[1][2] * (*c)) / A[1][1];
-    *a = (B[0] - A[0][1] * (*b) - A[0][2] * (*c)) / A[0][0];
+    *a = B[2] / A[2][2];
+    *b = (B[1] - A[1][2] * (*a)) / A[1][1];
+    *c = (B[0] - A[0][1] * (*b) - A[0][2] * (*a)) / A[0][0];
 }

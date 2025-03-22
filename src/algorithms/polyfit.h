@@ -11,6 +11,29 @@
 #define __CUBIC_FIT_H_
 
 /**
+ * @brief 线性曲线拟合
+ *
+ * @param x
+ * @param y
+ * @param size
+ * @param slope
+ * @param intercept
+ */
+void linear_curve_fit(float *x, float *y, int size, float *slope, float *intercept);
+
+/**
+ * @brief 二次拟合函数
+ * y = ax^2 + bx + c
+ * @param x
+ * @param y
+ * @param n
+ * @param a
+ * @param b
+ * @param c
+ */
+void quadratic_fit(float *x, float *y, int n, float *a, float *b, float *c);
+
+/**
  * @brief 三次拟合函数
  *
  * @param d_X 输入的数据的x值
@@ -30,17 +53,5 @@ void polyfit(double *d_X, double *d_Y, int d_N, int rank, double *coeff);
  */
 void find_max_y_x(double coef[4], double x_min, double x_max, double *x_max_y, double *max_y);
 
-/**
- * @brief 线性曲线拟合
- *
- * @param x
- * @param y
- * @param size
- * @param slope
- * @param intercept
- */
-void linear_curve_fit(float *x, float *y, int size, float *slope, float *intercept);
 
-// 二次拟合函数
-void quadratic_fit(double *x, double *y, int n, double *a, double *b, double *c);
 #endif
