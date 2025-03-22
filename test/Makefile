@@ -41,8 +41,8 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET) $(OBJDIR)/*.o
 
-test: $(TARGET)
-	$(TARGET)
+test: $(BUILD_DIR)/test_algorithms.out
+	$<
 
 .PHONY: clean all test
 
