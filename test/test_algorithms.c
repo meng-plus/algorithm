@@ -27,6 +27,79 @@ START_TEST(test_medianFilter)
 }
 END_TEST
 
+// 测试初始化函数
+START_TEST(test_kalman_filter_init)
+{
+    KalmanFilter kf;
+    KalmanFilter_Init(&kf, 0.01, 0.1, 1, 0);
+
+    ck_assert_float_eq(kf.Q, 0.01);
+    ck_assert_float_eq(kf.R, 0.1);
+    ck_assert_float_eq(kf.P, 1);
+    ck_assert_float_eq(kf.x, 0);
+    ck_assert_float_eq(kf.K, 0);
+}
+END_TEST
+
+// 测试更新函数
+START_TEST(test_kalman_filter_update)
+{
+    KalmanFilter kf;
+    KalmanFilter_Init(&kf, 0.01, 0.1, 1, 0);
+
+    float measurement    = 1.2;
+    float filtered_value = KalmanFilter_Update(&kf, measurement);
+
+    // 检查卡尔曼增益和状态估计值是否合理
+    ck_assert(kf.K > 0 && kf.K < 1);
+    ck_assert(filtered_value > 0 && filtered_value < measurement);
+}
+END_TEST
+
+// 测试多次更新
+START_TEST(test_kalman_filter_multiple_updates)
+{
+    KalmanFilter kf;
+    KalmanFilter_Init(&kf, 0.01, 0.1, 1, 0);
+
+    // 模拟含噪声的测量数据（真实值为 1.0）
+    float measurements[] = {1.2, 0.9, 1.1, 0.8, 1.3, 1.1, 0.7, 1.4, 0.6, 1.5};
+    int num_measurements = sizeof(measurements) / sizeof(measurements[0]);
+
+    // 记录滤波后的值
+    float filtered_values[num_measurements];
+
+    // 更新卡尔曼滤波器
+    for (int i = 0; i < num_measurements; i++)
+    {
+        filtered_values[i] = KalmanFilter_Update(&kf, measurements[i]);
+        // printf("measurement: %f, filtered: %f\n", measurements[i], filtered_values[i]);
+    }
+
+    // 检查滤波后的值是否逐渐收敛到真实值（1.0）
+    for (int i = 1; i < num_measurements; i++)
+    {
+        // 检查滤波后的值是否比原始测量值更接近真实值
+        float measurement_error = fabs(measurements[i] - 1.0);
+        float filtered_error    = fabs(filtered_values[i] - 1.0);
+        // printf("measurement_error: %f, filtered_error: %f\n", measurement_error, filtered_error);
+        ck_assert(filtered_error <= measurement_error);
+
+        // 检查滤波后的值是否逐渐稳定
+        if (i > 1)
+        {
+            float delta = fabs(filtered_values[i] - filtered_values[i - 1]);
+            // printf("delta: %f\n", delta);
+            ck_assert(delta < 0.2); // 确保滤波后的值变化不大
+        }
+    }
+
+    // 检查最终滤波后的值是否接近真实值
+    float final_error = fabs(filtered_values[num_measurements - 1] - 1.0);
+    ck_assert(final_error < 0.2);
+}
+END_TEST
+
 // 辅助函数：比较浮点数是否相等（允许一定的误差）
 int float_equal(float a, float b, float epsilon)
 {
@@ -131,11 +204,11 @@ START_TEST(test_cubic_fit)
 
     polyfit(x, y, n, 3, coef);
 
-    printf("拟合的三次多项式为: y = %.12fx^3 + %.12fx^2 + %.12fx + %.12f\n", coef[3], coef[2], coef[1], coef[0]);
+    // printf("拟合的三次多项式为: y = %.12fx^3 + %.12fx^2 + %.12fx + %.12f\n", coef[3], coef[2], coef[1], coef[0]);
 
     double x_max_y, max_y;
     find_max_y_x(coef, 105, 113, &x_max_y, &max_y);
-    printf("在范围 [105,113] 内, 最大 y 值为 %.5f 对应 x = %.5f\n", max_y, x_max_y);
+    // printf("在范围 [105,113] 内, 最大 y 值为 %.5f 对应 x = %.5f\n", max_y, x_max_y);
     ck_assert_int_le(max_y, 0.00063);
     ck_assert_int_ge(max_y, 0.00057);
     ck_assert_int_le(x_max_y, 113);
@@ -331,6 +404,9 @@ Suite *algorithms_suite(void)
     tcase_add_test(tc_mean, test_meanFilterint32);
     tcase_add_test(tc_mean, test_meanFilterFloat);
     tcase_add_test(tc_mean, test_medianFilter);
+    tcase_add_test(tc_mean, test_kalman_filter_init);
+    tcase_add_test(tc_mean, test_kalman_filter_update);
+    tcase_add_test(tc_mean, test_kalman_filter_multiple_updates);
     suite_add_tcase(s, tc_mean);
     /* Core test case */
     TCase *tc_cubic_fit = tcase_create("cubic_fit");

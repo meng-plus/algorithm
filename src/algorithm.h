@@ -7,4 +7,5 @@
 #include "algorithms/sort.h"
 #include "algorithms/search.h"
 #include "algorithms/array_utils.h"
+#include "algorithms/kalman_filter.h"
 #endif // ALGORITHM_MODULE_H
