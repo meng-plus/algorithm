@@ -73,14 +73,3 @@ void findMinGeneric(void *arr, int size, int elementSize, void *minValue, int *m
         }
     }
 }
-
-int countOccurrences(void *arr, int size, int elementSize, void *target)
-{
-    int count = 0;
-    for (int i = 0; i < size; i++)
-    {
-        void *currentElement = (char *)arr + i * elementSize;
-        if (memcmp(currentElement, target, elementSize) == 0) { count++; }
-    }
-    return count;
-}

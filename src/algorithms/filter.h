@@ -48,16 +48,5 @@ void findMaxGeneric(void *arr, int size, int elementSize, void *targetValue, int
 // 通用最小值及位置
 void findMinGeneric(void *arr, int size, int elementSize, void *targetValue, int *index, CompareFunc compare);
 
-/**
- * @brief  计算数组中某个元素出现的次数
- *
- * @param arr
- * @param size
- * @param elementSize
- * @param target
- * @param index
- * @return int 返回出现的次数
- */
-int countOccurrences(void *arr, int size, int elementSize, void *target);
 
 #endif // FILTER_H

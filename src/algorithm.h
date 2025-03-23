@@ -5,4 +5,5 @@
 #include "algorithms/humi_calc.h"
 #include "algorithms/polyfit.h"
 #include "algorithms/sort.h"
+#include "algorithms/search.h"
 #endif // ALGORITHM_MODULE_H
