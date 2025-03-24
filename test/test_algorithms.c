@@ -391,6 +391,95 @@ START_TEST(test_radixSort_int)
 }
 END_TEST
 
+// 测试线性插值
+START_TEST(test_linear_interpolation)
+{
+    double x         = 1.5;
+    double y         = 0.0;
+    double x_table[] = {1.0, 2.0, 3.0};
+    double y_table[] = {10.0, 20.0, 30.0};
+    int table_size   = 3;
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_LINEAR);
+    ck_assert_double_eq_tol(y, 15.0, 1e-6);
+}
+END_TEST
+
+// 测试临近插值
+START_TEST(test_nearest_neighbor_interpolation)
+{
+    double x         = 1.6;
+    double y         = 0.0;
+    double x_table[] = {1.0, 2.0, 3.0};
+    double y_table[] = {10.0, 20.0, 30.0};
+    int table_size   = 3;
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_NEAREST_NEIGHBOR);
+    ck_assert_double_eq_tol(y, 20.0, 1e-6);
+}
+END_TEST
+
+// 测试三次插值
+START_TEST(test_cubic_interpolation)
+{
+    double x         = 1.75;
+    double y         = 0.0;
+    double x_table[] = {1.0, 2.0, 3.0, 4.0};
+    double y_table[] = {10.0, 20.0, 30.0, 40.0};
+    int table_size   = 4;
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_CUBIC);
+    printf("y = %f\n", y);
+    ck_assert_double_eq_tol(y, 17.5, 1e-6);
+}
+END_TEST
+
+// 测试拉格朗日插值
+START_TEST(test_lagrange_interpolation)
+{
+    double x         = 1.5;
+    double y         = 0.0;
+    double x_table[] = {1.0, 2.0, 3.0};
+    double y_table[] = {10.0, 20.0, 30.0};
+    int table_size   = 3;
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_LAGRANGE);
+    ck_assert_double_eq_tol(y, 15.0, 1e-6);
+}
+END_TEST
+
+// 测试埃尔米特插值
+START_TEST(test_hermite_interpolation)
+{
+    double x             = 1.75;
+    double y             = 0.0;
+    double x_table[]     = {1.0, 2.0, 3.0};
+    double y_table[]     = {10.0, 20.0, 30.0};
+    int table_size       = 3;
+    double derivatives[] = {5.0, 10.0, 15.0}; // 假设导数已经提供
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_HERMITE);
+    printf("y = %f\n", y);
+    // 需要根据具体实现调整期望值
+    ck_assert_double_eq_tol(y, 17.5, 1e-6);
+}
+END_TEST
+
+// 测试B样条插值
+START_TEST(test_bspline_interpolation)
+{
+    double x         = 2.25;
+    double y         = 0.0;
+    double x_table[] = {1.0, 2.0, 3.0, 4.0};
+    double y_table[] = {10.0, 20.0, 30.0, 40.0};
+    int table_size   = 4;
+
+    interpolate(&x, &y, x_table, y_table, table_size, DATA_TYPE_DOUBLE, INTERP_BSPLINE);
+    printf("y = %f\n", y);
+    // 需要根据具体实现调整期望值
+    ck_assert_double_eq_tol(y, 22.5, 1e-6);
+}
+END_TEST
 Suite *algorithms_suite(void)
 {
     Suite *s;
@@ -437,6 +526,16 @@ Suite *algorithms_suite(void)
     tcase_add_test(tc_sort, test_countingSort_int);
     tcase_add_test(tc_sort, test_radixSort_int);
     suite_add_tcase(s, tc_sort);
+
+    TCase *tc_interpolation = tcase_create("interpolation");
+    tcase_add_test(tc_interpolation, test_linear_interpolation);
+    tcase_add_test(tc_interpolation, test_nearest_neighbor_interpolation);
+    tcase_add_test(tc_interpolation, test_cubic_interpolation);
+    tcase_add_test(tc_interpolation, test_lagrange_interpolation);
+    tcase_add_test(tc_interpolation, test_hermite_interpolation);
+    tcase_add_test(tc_interpolation, test_bspline_interpolation);
+    suite_add_tcase(s, tc_interpolation);
+
     return s;
 }
 

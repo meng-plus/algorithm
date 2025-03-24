@@ -5,7 +5,6 @@
 # clang-format -style=llvm -dump-config > .clang-format
 #
 ---
-Language: C
 BasedOnStyle: LLVM
 AccessModifierOffset: -1
 AlignAfterOpenBracket: Align
