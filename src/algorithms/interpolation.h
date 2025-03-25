@@ -19,7 +19,7 @@ typedef enum
     INTERP_CUBIC,            /*!< 三次插值 */
     INTERP_LAGRANGE,         /*!< 拉格朗日插值 */
     INTERP_HERMITE,          /*!< 埃尔米特插值 */
-    INTERP_BSPLINE           /*!< B样条插值 */
+    INTERP_SPLINE           /*!< B样条插值 计算结果与matlab 略有出入*/
 } InterpolationType;
 
 /**
