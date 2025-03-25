@@ -367,27 +367,15 @@ void hermite_interpolate(void *x, void *y, void *x_table, void *y_table, int tab
     else if (data_type == DATA_TYPE_DOUBLE) { *(double *)y = y_val; }
 }
 
-// 样条插值系数结构体
-typedef struct
-{
-    double *a;
-    double *b;
-    double *c;
-    double *d;
-} SplineCoefficients;
 // 计算样条插值系数
-SplineCoefficients *calculate_spline_coefficients(const double *x_table, const double *y_table, int table_size)
+void calculate_spline_coefficientsf(SplineCoefficients *coeff, const float *x_table, const float *y_table,
+                                    int table_size)
 {
-    SplineCoefficients *coeff = (SplineCoefficients *)malloc(sizeof(SplineCoefficients));
-    coeff->a                  = (double *)malloc(table_size * sizeof(double));
-    coeff->b                  = (double *)malloc(table_size * sizeof(double));
-    coeff->c                  = (double *)malloc(table_size * sizeof(double));
-    coeff->d                  = (double *)malloc(table_size * sizeof(double));
-    double *h                 = (double *)malloc((table_size - 1) * sizeof(double));
-    double *alpha             = (double *)malloc(table_size * sizeof(double));
-    double *l                 = (double *)malloc(table_size * sizeof(double));
-    double *mu                = (double *)malloc(table_size * sizeof(double));
-    double *z                 = (double *)malloc(table_size * sizeof(double));
+    float *h     = (float *)malloc((table_size - 1) * sizeof(float));
+    float *alpha = (float *)malloc(table_size * sizeof(float));
+    float *l     = (float *)malloc(table_size * sizeof(float));
+    float *mu    = (float *)malloc(table_size * sizeof(float));
+    float *z     = (float *)malloc(table_size * sizeof(float));
     // 计算h[i] = x[i+1] - x[i]
     for (int i = 0; i < table_size - 1; i++) { h[i] = x_table[i + 1] - x_table[i]; }
     // 计算alpha[i]
@@ -423,33 +411,137 @@ SplineCoefficients *calculate_spline_coefficients(const double *x_table, const d
     free(l);
     free(mu);
     free(z);
+}
+void calculate_spline_coefficientsd(SplineCoefficients *coeff, const double *x_table, const double *y_table,
+                                    int table_size)
+{
+    double *h     = (double *)malloc((table_size - 1) * sizeof(double));
+    double *alpha = (double *)malloc(table_size * sizeof(double));
+    double *l     = (double *)malloc(table_size * sizeof(double));
+    double *mu    = (double *)malloc(table_size * sizeof(double));
+    double *z     = (double *)malloc(table_size * sizeof(double));
+    // 计算h[i] = x[i+1] - x[i]
+    for (int i = 0; i < table_size - 1; i++) { h[i] = x_table[i + 1] - x_table[i]; }
+    // 计算alpha[i]
+    for (int i = 1; i < table_size - 1; i++)
+    {
+        alpha[i] = (3.0 / h[i]) * (y_table[i + 1] - y_table[i]) - (3.0 / h[i - 1]) * (y_table[i] - y_table[i - 1]);
+    }
+    // 自然边界条件：二阶导数为0
+    l[0]  = 1.0;
+    mu[0] = 0.0;
+    z[0]  = 0.0;
+    // 前向消元
+    for (int i = 1; i < table_size - 1; i++)
+    {
+        l[i]  = 2.0 * (x_table[i + 1] - x_table[i - 1]) - h[i - 1] * mu[i - 1];
+        mu[i] = h[i] / l[i];
+        z[i]  = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+    }
+    // 自然边界条件：二阶导数为0
+    l[table_size - 1]        = 1.0;
+    z[table_size - 1]        = 0.0;
+    coeff->c[table_size - 1] = 0.0;
+    // 后向代入
+    for (int j = table_size - 2; j >= 0; j--)
+    {
+        coeff->c[j] = z[j] - mu[j] * coeff->c[j + 1];
+        coeff->b[j] = (y_table[j + 1] - y_table[j]) / h[j] - h[j] * (coeff->c[j + 1] + 2.0 * coeff->c[j]) / 3.0;
+        coeff->d[j] = (coeff->c[j + 1] - coeff->c[j]) / (3.0 * h[j]);
+        coeff->a[j] = y_table[j];
+    }
+    free(h);
+    free(alpha);
+    free(l);
+    free(mu);
+    free(z);
+}
+SplineCoefficients *splinecoeff_create(int table_size)
+{
+    SplineCoefficients *coeff = (SplineCoefficients *)malloc(sizeof(SplineCoefficients));
+    coeff->a                  = (double *)malloc(table_size * sizeof(double));
+    coeff->b                  = (double *)malloc(table_size * sizeof(double));
+    coeff->c                  = (double *)malloc(table_size * sizeof(double));
+    coeff->d                  = (double *)malloc(table_size * sizeof(double));
+
     return coeff;
 }
-// 样条插值函数
-void spline_interpolate(const void *x, void *y, const void *x_table, const void *y_table, int table_size,
-                        DataType data_type)
+void splinecoeff_destory(SplineCoefficients *coeff)
 {
-    if (data_type != DATA_TYPE_FLOAT && data_type != DATA_TYPE_DOUBLE)
-    {
-        printf("Unsupported data type for spline interpolation.\n");
-        return;
-    }
-    SplineCoefficients *coeff = calculate_spline_coefficients((const double *)x_table, (const double *)y_table,
-                                                              table_size);
-    double x_val              = (data_type == DATA_TYPE_FLOAT) ? *(float *)x : *(double *)x;
-    int i                     = 0;
-    // 找到x所在的区间
-    while (i < table_size - 1 && x_val > ((double *)x_table)[i + 1]) { i++; }
-    // 计算插值结果
-    double dx     = x_val - ((double *)x_table)[i];
-    double result = coeff->a[i] + coeff->b[i] * dx + coeff->c[i] * dx * dx + coeff->d[i] * dx * dx * dx;
-    if (data_type == DATA_TYPE_FLOAT) { *(float *)y = (float)result; }
-    else { *(double *)y = result; }
     free(coeff->a);
     free(coeff->b);
     free(coeff->c);
     free(coeff->d);
     free(coeff);
+}
+void calculate_spline_coefficients(SplineCoefficients *coeff, const void *x_table, const void *y_table, int table_size,
+                                   DataType data_type)
+{
+    if (DATA_TYPE_FLOAT == data_type)
+    {
+        calculate_spline_coefficientsf(coeff, (const float *)x_table, (const float *)y_table, table_size);
+    }
+    else if (DATA_TYPE_DOUBLE == data_type)
+    {
+        calculate_spline_coefficientsd(coeff, (const double *)x_table, (const double *)y_table, table_size);
+    }
+}
+
+/**
+ * @brief 计算插值结果
+ *
+ * @param coeff  样条插值系数
+ * @param x_val  待插值的自变量
+ * @param x_table x表
+ * @param table_size 表大小
+ * @return
+ */
+double calculate_spline_result(SplineCoefficients *coeff, const void *x_val, const void *x_table, int table_size,
+                               DataType data_type)
+{
+    double result = 0;
+    double dx;
+    int i = 0;
+    if (DATA_TYPE_FLOAT == data_type)
+    {
+        float *x_valf   = (float *)x_val;
+        float *x_tablef = (float *)x_table;
+        // 找到x所在的区间
+        while (i < table_size - 1 && *x_valf > x_tablef[i + 1]) { i++; }
+        // 计算插值结果
+        dx = *x_valf - x_tablef[i];
+    }
+    else if (DATA_TYPE_DOUBLE == data_type)
+    {
+        double *x_vald   = (double *)x_val;
+        double *x_tabled = (double *)x_table;
+        // 找到x所在的区间
+        while (i < table_size - 1 && *x_vald > x_tabled[i + 1]) { i++; }
+        // 计算插值结果
+        dx = *x_vald - x_tabled[i];
+    }
+    else { dx = 0; }
+    result = coeff->a[i] + coeff->b[i] * dx + coeff->c[i] * dx * dx + coeff->d[i] * dx * dx * dx;
+    return result;
+}
+// 样条插值函数
+bool spline_interpolate(const void *x, void *y, const void *x_table, const void *y_table, int table_size,
+                        DataType data_type)
+{
+    SplineCoefficients *coeff = splinecoeff_create(table_size);
+
+    if (data_type == DATA_TYPE_FLOAT)
+    {
+        calculate_spline_coefficientsf(coeff, (const float *)x_table, (const float *)y_table, table_size);
+        *(float *)y = calculate_spline_result(coeff, x, x_table, table_size, DATA_TYPE_FLOAT);
+    }
+    else if (data_type == DATA_TYPE_DOUBLE)
+    {
+        calculate_spline_coefficientsd(coeff, (const double *)x_table, (const double *)y_table, table_size);
+        *(double *)y = calculate_spline_result(coeff, x, x_table, table_size, DATA_TYPE_DOUBLE);
+    }
+    splinecoeff_destory(coeff);
+    return true;
 }
 
 
@@ -474,10 +566,10 @@ void interpolate(void *x, void *y, void *x_table, void *y_table, int table_size,
         break;
     case INTERP_HERMITE: /*!< 埃尔米特插值 */
         hermite_interpolate(x, y, x_table, y_table, table_size, data_type);
-
         break;
     case INTERP_SPLINE: /*!< B样条插值 */
         spline_interpolate(x, y, x_table, y_table, table_size, data_type);
         break;
     }
 }
+
