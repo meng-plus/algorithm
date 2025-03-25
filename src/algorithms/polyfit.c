@@ -144,7 +144,7 @@ void linear_curve_fit(float *x, float *y, int size, float *slope, float *interce
     *intercept = (sum_y - *slope * sum_x) / size;
 }
 // 二次拟合函数
-void quadratic_fit(float *x, float *y, int n, float *a, float *b, float *c)
+void quadratic_fit(float *x, float *y, int n, float *coeff)
 {
     float sum_x = 0, sum_x2 = 0, sum_x3 = 0, sum_x4 = 0;
     float sum_y = 0, sum_xy = 0, sum_x2y = 0;
@@ -181,7 +181,7 @@ void quadratic_fit(float *x, float *y, int n, float *a, float *b, float *c)
         }
     }
 
-    *a = B[2] / A[2][2];
-    *b = (B[1] - A[1][2] * (*a)) / A[1][1];
-    *c = (B[0] - A[0][1] * (*b) - A[0][2] * (*a)) / A[0][0];
+    coeff[2] = B[2] / A[2][2];
+    coeff[1] = (B[1] - A[1][2] * (coeff[2])) / A[1][1];
+    coeff[0] = (B[0] - A[0][1] * (coeff[1]) - A[0][2] * coeff[2]) / A[0][0];
 }

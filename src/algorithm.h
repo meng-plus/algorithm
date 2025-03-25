@@ -9,4 +9,6 @@
 #include "algorithms/array_utils.h"
 #include "algorithms/kalman_filter.h"
 #include "algorithms/interpolation.h"
+#include "algorithms/r_square.h"
+
 #endif // ALGORITHM_MODULE_H

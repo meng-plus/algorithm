@@ -11,14 +11,12 @@ START_TEST(test_meanFilterFloat)
 }
 END_TEST
 
-START_TEST(test_meanFilterint32)
-{
-    int data[] = {1, 2, 3, 4, 5};
-    ck_assert_int_eq(meanFilterint32(data, 5), 3.0);
-}
-END_TEST
 START_TEST(test_medianFilter)
 {
+    {
+        int data[] = {1, 2, 3, 4, 5};
+        ck_assert_int_eq(meanFilterint32(data, 5), 3.0);
+    }
     float data[] = {21, 30, 15, 25, 35};
     float median = 0;
     medianFilter(data, 5, sizeof(float), &median, compareFloat);
@@ -99,12 +97,6 @@ START_TEST(test_kalman_filter_multiple_updates)
     ck_assert(final_error < 0.2);
 }
 END_TEST
-
-// 辅助函数：比较浮点数是否相等（允许一定的误差）
-int float_equal(float a, float b, float epsilon)
-{
-    return fabs(a - b) < epsilon;
-}
 // 测试用例 1：简单的线性数据
 START_TEST(test_linear_curve_fit_simple)
 {
@@ -114,8 +106,8 @@ START_TEST(test_linear_curve_fit_simple)
     float slope, intercept;
     linear_curve_fit(x, y, size, &slope, &intercept);
     // 预期结果：斜率为 2，截距为 0
-    ck_assert(float_equal(slope, 2.0f, 1e-6));
-    ck_assert(float_equal(intercept, 0.0f, 1e-6));
+    ck_assert_float_eq_tol(slope, 2.0f, 1e-6);
+    ck_assert_float_eq_tol(intercept, 0.0f, 1e-6);
 }
 END_TEST
 // 测试用例 2：带截距的线性数据
@@ -127,8 +119,8 @@ START_TEST(test_linear_curve_fit_intercept)
     float slope, intercept;
     linear_curve_fit(x, y, size, &slope, &intercept);
     // 预期结果：斜率为 2，截距为 1
-    ck_assert(float_equal(slope, 2.0f, 1e-6));
-    ck_assert(float_equal(intercept, 1.0f, 1e-6));
+    ck_assert_float_eq_tol(slope, 2.0f, 1e-6);
+    ck_assert_float_eq_tol(intercept, 1.0f, 1e-6);
 }
 END_TEST
 // 测试用例 3：随机数据
@@ -140,8 +132,8 @@ START_TEST(test_linear_curve_fit_random)
     float slope, intercept;
     linear_curve_fit(x, y, size, &slope, &intercept);
     // 预期结果：斜率接近 2，截距接近 1
-    ck_assert(float_equal(slope, 1.65f, 1e-2));
-    ck_assert(float_equal(intercept, 1.1f, 1e-2));
+    ck_assert_float_eq_tol(slope, 1.65f, 1e-2);
+    ck_assert_float_eq_tol(intercept, 1.1f, 1e-2);
 }
 END_TEST
 // 测试用例 1：简单的二次拟合
@@ -150,12 +142,15 @@ START_TEST(test_quadratic_fit_simple)
     float x[] = {0, 1, 2, 3, 4};
     float y[] = {1, 4, 9, 16, 25};
     int size  = sizeof(x) / sizeof(x[0]);
-    float a, b, c;
-    quadratic_fit(x, y, size, &a, &b, &c);
-    // 预期结果：a = 1, b = 2, c = 1 (y = 1*x^2 + 2*x + 1)
-    ck_assert(float_equal(a, 1.0f, 1e-6));
-    ck_assert(float_equal(b, 2.0f, 1e-6));
-    ck_assert(float_equal(c, 1.0f, 1e-6));
+    float coeff[3];
+    quadratic_fit(x, y, size, coeff);
+    // 预期结果：y = p1+p2*x+p3*x^2
+    ck_assert_float_eq_tol(coeff[2], 1.0f, 1e-6);
+    ck_assert_float_eq_tol(coeff[1], 2.0f, 1e-6);
+    ck_assert_float_eq_tol(coeff[0], 1.0f, 1e-6);
+    // 计算R²
+    float r2_float = r_square_float(x, y, 5, coeff, 2);
+    ck_assert_float_eq_tol(r2_float, 1.0f, 1e-6);
 }
 END_TEST
 // 测试用例 2：带线性项和常数的二次拟合
@@ -164,12 +159,12 @@ START_TEST(test_quadratic_fit_with_terms)
     float x[] = {0, 1, 2, 3, 4};
     float y[] = {2, 5, 12, 23, 38};
     int size  = sizeof(x) / sizeof(x[0]);
-    float a, b, c;
-    quadratic_fit(x, y, size, &a, &b, &c);
-    // 预期结果：a = 2, b = 1, c = 2 (y = 2x^2 + 1x + 2)
-    ck_assert(float_equal(a, 2.0f, 1e-6));
-    ck_assert(float_equal(b, 1.0f, 1e-6));
-    ck_assert(float_equal(c, 2.0f, 1e-6));
+    float coeff[3];
+    quadratic_fit(x, y, size, coeff);
+    // 预期结果：y = p1+p2*x+p3*x^2
+    ck_assert_float_eq_tol(coeff[2], 2.0f, 1e-6);
+    ck_assert_float_eq_tol(coeff[1], 1.0f, 1e-6);
+    ck_assert_float_eq_tol(coeff[0], 2.0f, 1e-6);
 }
 END_TEST
 // 测试用例 3：随机数据的二次拟合
@@ -178,12 +173,12 @@ START_TEST(test_quadratic_fit_random)
     float x[] = {-2, -1, 0, 1, 2};
     float y[] = {8, -1, -6, -1, 8};
     int size  = sizeof(x) / sizeof(x[0]);
-    float a, b, c;
-    quadratic_fit(x, y, size, &a, &b, &c);
-    // 预期结果：a =3.285714, b = 0.0, c = -4.971429  (y = ax^2 + bx - c)
-    ck_assert(float_equal(a, 3.285714f, 1e-6));
-    ck_assert(float_equal(b, 0.0f, 1e-6));
-    ck_assert(float_equal(c, -4.971429f, 1e-6));
+    float coeff[3];
+    quadratic_fit(x, y, size, coeff);
+    // 预期结果：y = p1+p2*x+p3*x^2
+    ck_assert_double_eq_tol(coeff[2], 3.285714f, 1e-6);
+    ck_assert_double_eq_tol(coeff[1], 0.0f, 1e-6);
+    ck_assert_double_eq_tol(coeff[0], -4.971429f, 1e-6);
 }
 END_TEST
 
@@ -203,7 +198,9 @@ START_TEST(test_cubic_fit)
     double coef[4];
 
     polyfit(x, y, n, 3, coef);
-
+    // 计算R²
+    float r2_float = r_square_double(x, y, n, coef, 3);
+    ck_assert_double_eq_tol(r2_float, 0.961957f, 1e-6);
     // printf("拟合的三次多项式为: y = %.12fx^3 + %.12fx^2 + %.12fx + %.12f\n", coef[3], coef[2], coef[1], coef[0]);
 
     double x_max_y, max_y;
@@ -456,8 +453,6 @@ Suite *algorithms_suite(void)
 
     /* Core test case */
     tc_mean = tcase_create("mean");
-
-    tcase_add_test(tc_mean, test_meanFilterint32);
     tcase_add_test(tc_mean, test_meanFilterFloat);
     tcase_add_test(tc_mean, test_medianFilter);
     tcase_add_test(tc_mean, test_kalman_filter_init);

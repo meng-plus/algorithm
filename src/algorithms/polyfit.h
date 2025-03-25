@@ -27,11 +27,9 @@ void linear_curve_fit(float *x, float *y, int size, float *slope, float *interce
  * @param x
  * @param y
  * @param n
- * @param a
- * @param b
- * @param c
+ * @param coeff 输出的系数
  */
-void quadratic_fit(float *x, float *y, int n, float *a, float *b, float *c);
+void quadratic_fit(float *x, float *y, int n, float *coeff);
 
 /**
  * @brief 三次拟合函数
